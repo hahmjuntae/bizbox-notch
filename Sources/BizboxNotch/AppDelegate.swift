@@ -276,14 +276,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func apply(_ snapshot: AttendanceSnapshot) {
-        if let clockInAt = snapshot.clockInAt {
-            settings.lastClockInAt = clockInAt
-        }
-
-        if let clockOutAt = snapshot.clockOutAt {
-            settings.lastClockOutAt = clockOutAt
-        }
-
+        settings.lastClockInAt = snapshot.clockInAt
+        settings.lastClockOutAt = snapshot.clockOutAt
         settings.lastSiteUpdatedAt = snapshot.fetchedAt
     }
 

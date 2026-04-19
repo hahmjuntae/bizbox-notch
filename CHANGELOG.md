@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.18 - 2026-04-20
+
+- Cleared stale menu times when Bizbox reports no clock-in or clock-out time.
+
 ## 0.2.17 - 2026-04-20
 
 - Restored menu row padding while keeping the settings icon hidden.
