@@ -67,9 +67,12 @@ dist/Bizbox Notch.dmg
 최초 설치:
 
 ```bash
+export HOMEBREW_GITHUB_API_TOKEN="$(gh auth token)"
 brew tap hahmjuntae/bizbox-notch git@github.com:hahmjuntae/bizbox-notch.git
 brew install --cask bizbox-notch
 ```
+
+private GitHub Release asset을 받기 때문에 `HOMEBREW_GITHUB_API_TOKEN`에는 `hahmjuntae/bizbox-notch`를 읽을 수 있는 token이 필요합니다.
 
 업데이트:
 

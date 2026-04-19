@@ -6,3 +6,4 @@
 - Added settings for the Bizbox URL, username, and Keychain-backed password storage.
 - Added real Bizbox time synchronization for clock-in, clock-out, and recent update status.
 - Added DMG packaging and a Homebrew cask for private tap installation.
+- Fixed private GitHub Release downloads for Homebrew installs with an authenticated token.
