@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.13 - 2026-04-19
+
+- Switched Homebrew installation to public release downloads without token setup.
+- Added a white app icon with the black Forbiz logo.
+
 ## 0.2.12 - 2026-04-19
 
 - Called Bizbox's attendance function directly after anchor activation to avoid synthetic anchor-click misses.

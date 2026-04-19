@@ -1,78 +1,15 @@
-# bizbox-notch
+# Bizbox Notch
 
-macOS 상단바에 뜨는 Swift 메뉴바 앱입니다. 상단바의 `근태`를 클릭하면 `출근` / `퇴근` 두 메뉴가 나오고, 각각 Bizbox에 로그인한 뒤 실제 근태 처리 버튼을 클릭합니다. 처리에 성공하면 메뉴에 `출근시간` / `퇴근시간`이 기록됩니다.
-
-macOS에는 서드파티 앱이 시스템 Dynamic Island 자체를 확장하는 공개 API가 없습니다. 그래서 이 버전은 노치 주변에서 가장 자연스럽게 접근할 수 있는 native 상단바 앱으로 구현했습니다.
+macOS 상단바에서 Bizbox 출근/퇴근을 실행하는 메뉴바 앱입니다.
 
 ## 설치
 
-```bash
-swift build
-```
-
-## 설정
-
-상단바 `근태` 메뉴에서 `설정...`을 열고 다음 값을 저장합니다.
-
-- 사이트 URL: 기본값 `https://gw.forbiz.co.kr/gw/userMain.do`
-- 아이디
-- 비밀번호
-
-아이디와 마지막 출퇴근 시간은 `UserDefaults`에 저장하고, 비밀번호는 macOS Keychain에 저장합니다.
-
-## 실행
+설치:
 
 ```bash
-swift run BizboxNotch
-```
-
-앱은 Dock에 표시되지 않고 상단바에 `근태`로 표시됩니다.
-
-## 확인된 Bizbox 클릭 대상
-
-Playwright로 실제 로그인 후 확인한 DOM입니다.
-
-```text
-로그인 아이디 input: #userId
-로그인 비밀번호 input: #userPw
-로그인 실행: actionLogin()
-출근 탭: li[onclick="fnSetAttOption(1)"]
-퇴근 탭: li[onclick="fnSetAttOption(4)"]
-출근 처리 앵커: #attHref1
-퇴근 처리 앵커: #attHref2
-```
-
-`fnSetAttOption(1/4)`는 탭을 활성화하면서 실제 처리 앵커의 `onclick`을 `fnAttendCheck(1/4)`로 설정합니다. 앱은 탭 클릭 후 `#attHref1` 또는 `#attHref2`를 클릭하고 사이트의 확인 팝업을 자동 승인합니다.
-
-## DMG 빌드
-
-```bash
-chmod +x scripts/build-dmg.sh
-scripts/build-dmg.sh
-```
-
-빌드 결과는 `dist/` 아래에 생성됩니다.
-
-```text
-dist/Bizbox-Notch-0.2.12.dmg
-dist/Bizbox Notch.dmg
-```
-
-현재 설정은 로컬 배포용 ad-hoc signed DMG입니다. 다른 사람에게 Gatekeeper 경고 없이 배포하려면 Apple Developer ID 서명과 notarization 설정이 추가로 필요합니다.
-
-## Homebrew 설치
-
-단일 private repo `hahmjuntae/bizbox-notch`를 앱 소스와 tap으로 함께 씁니다.
-
-최초 설치:
-
-```bash
-export HOMEBREW_GITHUB_API_TOKEN="$(gh auth token)"
 brew tap hahmjuntae/bizbox-notch https://github.com/hahmjuntae/bizbox-notch.git
 brew install --cask bizbox-notch
 ```
-
-private GitHub Release asset을 받기 때문에 `HOMEBREW_GITHUB_API_TOKEN`에는 `hahmjuntae/bizbox-notch`를 읽을 수 있는 token이 필요합니다.
 
 업데이트:
 
@@ -81,10 +18,52 @@ brew update
 brew upgrade --cask bizbox-notch
 ```
 
-릴리스할 때는 `dist/Bizbox-Notch-<version>.dmg`를 GitHub Release asset으로 올리고, `Casks/bizbox-notch.rb`의 `version`과 `sha256`을 갱신합니다.
-
-## 테스트
+삭제:
 
 ```bash
-swift build
+brew uninstall --cask bizbox-notch
 ```
+
+## 설정
+
+설치 후 앱을 실행하면 macOS 상단바에 `근태`가 표시됩니다.
+
+상단바 `근태` 메뉴에서 `설정...`을 열고 아래 값을 저장합니다.
+
+- 사이트 URL: `https://gw.forbiz.co.kr/gw/userMain.do`
+- 아이디
+- 비밀번호
+
+비밀번호는 macOS Keychain에 저장됩니다.
+
+## 사용법
+
+상단바의 `근태`를 클릭해서 메뉴를 엽니다.
+
+- `출근`: Bizbox에 로그인하고 출근 처리를 실행합니다.
+- `퇴근`: Bizbox에 로그인하고 퇴근 처리를 실행합니다.
+- `시간 새로고침`: Bizbox에서 현재 출근/퇴근 시간을 다시 가져옵니다.
+- `설정...`: 사이트 URL, 아이디, 비밀번호를 수정합니다.
+- `종료`: 앱을 종료합니다.
+
+처리 중에는 상단바 문구가 단계별로 바뀝니다.
+
+```text
+접속 준비 중...
+세션 초기화 중...
+접속 중...
+로그인 확인 중...
+로그인 중...
+확인 중...
+시간 반영 중...
+```
+
+실패하면 상단바에 `실패`가 잠시 표시된 뒤 다시 `근태`로 돌아갑니다.
+
+## 표시 정보
+
+메뉴에는 다음 값이 표시됩니다.
+
+- `출근시간`: Bizbox에서 읽어온 실제 출근 시간
+- `퇴근시간`: Bizbox에서 읽어온 실제 퇴근 시간
+- `최근 업데이트`: 앱이 Bizbox에서 시간을 마지막으로 읽어온 시각

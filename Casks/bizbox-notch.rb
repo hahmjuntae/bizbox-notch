@@ -1,51 +1,8 @@
-module BizboxNotchGitHub
-  def self.token
-    token = ENV["HOMEBREW_GITHUB_API_TOKEN"]
-
-    if token.nil? || token.empty?
-      require "utils/github"
-      token = GitHub::API.credentials
-    end
-
-    raise "Set HOMEBREW_GITHUB_API_TOKEN to a token that can read hahmjuntae/bizbox-notch" if token.nil? || token.empty?
-
-    token
-  end
-
-  def self.release_asset_url(tag, asset_name)
-    require "json"
-    require "net/http"
-    require "uri"
-
-    uri = URI("https://api.github.com/repos/hahmjuntae/bizbox-notch/releases/tags/#{tag}")
-    response = Net::HTTP.get_response(
-      uri,
-      {
-        "Accept" => "application/vnd.github+json",
-        "Authorization" => "Bearer #{token}",
-        "X-GitHub-Api-Version" => "2022-11-28"
-      }
-    )
-
-    raise "Failed to read Bizbox Notch release #{tag}: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
-
-    release = JSON.parse(response.body)
-    asset = release.fetch("assets").find { |candidate| candidate.fetch("name") == asset_name }
-    raise "Release asset #{asset_name} not found in #{tag}" unless asset
-
-    api_url = URI(asset.fetch("url"))
-    api_url.user = "x-access-token"
-    api_url.password = token
-    api_url.to_s
-  end
-end
-
 cask "bizbox-notch" do
-  version "0.2.12"
-  sha256 "6c27aeb800f71263673667baf88d5e67d9f7f03e2b78b1f1689cef128d55ca6d"
+  version "0.2.13"
+  sha256 "48c2d4f5813d863595b7d5a568bd3a8d1914f18576bba68b11b1edefcf8f6072"
 
-  url BizboxNotchGitHub.release_asset_url("v#{version}", "Bizbox-Notch-#{version}.dmg"),
-      header: "Accept: application/octet-stream"
+  url "https://github.com/hahmjuntae/bizbox-notch/releases/download/v#{version}/Bizbox-Notch-#{version}.dmg"
   name "Bizbox Notch"
   desc "Menu bar attendance helper for Bizbox"
   homepage "https://github.com/hahmjuntae/bizbox-notch"
