@@ -56,13 +56,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(statusTextItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "설정...", action: #selector(openSettings), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "종료", action: #selector(quit), keyEquivalent: ""))
+        menu.addItem(makePlainActionItem(title: "설정...", action: #selector(openSettings)))
+        menu.addItem(makePlainActionItem(title: "종료", action: #selector(quit)))
 
         menu.items.forEach { $0.target = $0.target ?? self }
         menu.items.forEach { $0.image = nil }
         menu.items.forEach { $0.state = .off }
         item.menu = menu
+    }
+
+    private func makePlainActionItem(title: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem()
+        let button = NSButton(title: title, target: self, action: action)
+        button.alignment = .left
+        button.bezelStyle = .regularSquare
+        button.isBordered = false
+        button.image = nil
+        button.font = .menuFont(ofSize: NSFont.systemFontSize)
+        button.frame = NSRect(x: 0, y: 0, width: 180, height: 24)
+        item.view = button
+        return item
     }
 
     private func refreshMenu() {
@@ -322,11 +335,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
+        menu.cancelTracking()
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController.showWindow(nil)
     }
 
     @objc private func quit() {
+        menu.cancelTracking()
         NSApp.terminate(nil)
     }
 

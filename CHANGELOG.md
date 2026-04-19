@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.16 - 2026-04-20
+
+- Replaced settings and quit menu rows with plain custom items to remove the remaining left icon.
+
 ## 0.2.15 - 2026-04-20
 
 - Removed the menu state column so no gear or status icon appears beside settings.
