@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.12 - 2026-04-19
+
+- Called Bizbox's attendance function directly after anchor activation to avoid synthetic anchor-click misses.
+
 ## 0.2.11 - 2026-04-19
 
 - Waited for the Bizbox clock-out anchor to become active before clicking it again.

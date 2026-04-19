@@ -215,7 +215,6 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     private func clickAttendance(_ action: AttendanceAction) async throws -> AttendanceResult {
         let tabSelector = try jsLiteral(action.tabSelector)
-        let submitSelector = try jsLiteral(action.submitSelector)
 
         reportProgress("\(action.title) 선택 중...")
         let tabClicked = try await boolJS("""
@@ -251,9 +250,8 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         reportProgress("\(action.title) 처리 중...")
         let submitted = try await boolJS("""
         (function() {
-            const submit = document.querySelector(\(submitSelector));
-            if (!submit || typeof submit.click !== "function") return false;
-            submit.click();
+            if (typeof window.fnAttendCheck !== "function") return false;
+            window.fnAttendCheck(\(action.code));
             return true;
         })();
         """)
