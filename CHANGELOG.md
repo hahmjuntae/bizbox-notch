@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.14 - 2026-04-20
+
+- Simplified the menu refresh label and removed visible menu shortcut hints.
+
 ## 0.2.13 - 2026-04-19
 
 - Switched Homebrew installation to public release downloads without token setup.

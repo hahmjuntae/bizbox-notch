@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let clockOutItem = NSMenuItem(title: "퇴근", action: #selector(clockOut), keyEquivalent: "")
     private let clockInTimeItem = NSMenuItem(title: "출근시간: --:--:--", action: nil, keyEquivalent: "")
     private let clockOutTimeItem = NSMenuItem(title: "퇴근시간: --:--:--", action: nil, keyEquivalent: "")
-    private let refreshTimesItem = NSMenuItem(title: "시간 새로고침", action: #selector(refreshTimesFromMenu), keyEquivalent: "r")
+    private let refreshTimesItem = NSMenuItem(title: "새로고침", action: #selector(refreshTimesFromMenu), keyEquivalent: "")
     private let statusTextItem = NSMenuItem(title: "대기 중", action: nil, keyEquivalent: "")
     private var automationRunning = false
 
@@ -55,10 +55,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(statusTextItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "설정...", action: #selector(openSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "종료", action: #selector(quit), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "설정...", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "종료", action: #selector(quit), keyEquivalent: ""))
 
         menu.items.forEach { $0.target = $0.target ?? self }
+        menu.items.forEach { $0.image = nil }
         item.menu = menu
     }
 
@@ -154,7 +155,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showProgress("\(action.title) 준비 중...")
         } else {
             statusItem?.button?.title = "근태"
-            refreshTimesItem.title = "시간 새로고침"
+            refreshTimesItem.title = "새로고침"
             refreshMenu()
         }
     }
@@ -195,14 +196,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 refreshMenu()
 
                 if !silent {
-                    notificationTitle = "시간 새로고침 완료"
+                    notificationTitle = "새로고침 완료"
                     notificationBody = refreshNotificationBody(for: snapshot)
                 }
             } catch {
                 if !silent {
                     failed = true
                     showFailure(error.localizedDescription)
-                    notificationTitle = "시간 새로고침 실패"
+                    notificationTitle = "새로고침 실패"
                     notificationBody = error.localizedDescription
                 } else {
                     refreshMenu()
@@ -217,7 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             clockInItem.isEnabled = true
             clockOutItem.isEnabled = true
             refreshTimesItem.isEnabled = true
-            refreshTimesItem.title = "시간 새로고침"
+            refreshTimesItem.title = "새로고침"
             statusItem?.button?.image = makeStatusIcon()
             statusItem?.button?.title = "근태"
             menu.update()
