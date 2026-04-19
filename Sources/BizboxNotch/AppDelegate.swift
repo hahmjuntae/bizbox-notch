@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.toolTip = "Bizbox Notch 근태"
         statusItem = item
 
+        menu.showsStateColumn = false
         clockInItem.target = self
         clockOutItem.target = self
         refreshTimesItem.target = self
@@ -60,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.items.forEach { $0.target = $0.target ?? self }
         menu.items.forEach { $0.image = nil }
+        menu.items.forEach { $0.state = .off }
         item.menu = menu
     }
 

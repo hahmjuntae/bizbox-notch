@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.15 - 2026-04-20
+
+- Removed the menu state column so no gear or status icon appears beside settings.
+
 ## 0.2.14 - 2026-04-20
 
 - Simplified the menu refresh label and removed visible menu shortcut hints.
