@@ -54,7 +54,7 @@ scripts/build-dmg.sh
 빌드 결과는 `dist/` 아래에 생성됩니다.
 
 ```text
-dist/Bizbox-Notch-0.2.7.dmg
+dist/Bizbox-Notch-0.2.8.dmg
 dist/Bizbox Notch.dmg
 ```
 

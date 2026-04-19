@@ -4,7 +4,9 @@ import UserNotifications
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
-    private lazy var automation = AttendanceAutomation(settings: settings)
+    private lazy var automation = AttendanceAutomation(settings: settings) { [weak self] message in
+        self?.showProgress(message)
+    }
     private lazy var settingsWindowController = SettingsWindowController(settings: settings) { [weak self] in
         self?.refreshMenu()
     }
@@ -142,11 +144,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clockOutItem.isEnabled = !running
         refreshTimesItem.isEnabled = !running
         statusItem?.button?.image = running ? makeRunningStatusIcon() : makeStatusIcon()
-        statusItem?.button?.title = running ? "\(action.title) 중" : "근태"
 
         if running {
-            statusTextItem.title = "\(action.title) 처리 중..."
+            showProgress("\(action.title) 준비 중...")
         } else {
+            statusItem?.button?.title = "근태"
+            refreshTimesItem.title = "시간 새로고침"
             refreshMenu()
         }
     }
@@ -173,11 +176,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clockInItem.isEnabled = false
         clockOutItem.isEnabled = false
         refreshTimesItem.isEnabled = false
-        refreshTimesItem.title = "업데이트중..."
         statusItem?.button?.image = makeRunningStatusIcon()
-        statusItem?.button?.title = "업데이트중..."
-        statusTextItem.title = "사이트 시간 동기화 중..."
-        menu.update()
+        showProgress("접속 준비 중...")
 
         Task { @MainActor in
             var notificationTitle: String?
@@ -216,6 +216,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 showNotification(title: notificationTitle, body: notificationBody)
             }
         }
+    }
+
+    private func showProgress(_ message: String) {
+        statusItem?.button?.image = makeRunningStatusIcon()
+        statusItem?.button?.title = message
+        statusTextItem.title = message
+        refreshTimesItem.title = message
+        menu.update()
     }
 
     private func keepBusyIndicatorVisible(since startedAt: Date) async {

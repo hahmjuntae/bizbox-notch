@@ -30,7 +30,10 @@ struct AttendanceSnapshot {
 
 @MainActor
 final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
+    typealias ProgressHandler = @MainActor (String) -> Void
+
     private let settings: SettingsStore
+    private let onProgress: ProgressHandler?
     private var webView: WKWebView?
     private var hiddenWindow: NSWindow?
     private var navigationContinuation: CheckedContinuation<Void, Error>?
@@ -38,8 +41,9 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
     private var lastAlertMessage: String?
     private var lastConfirmMessage: String?
 
-    init(settings: SettingsStore) {
+    init(settings: SettingsStore, onProgress: ProgressHandler? = nil) {
         self.settings = settings
+        self.onProgress = onProgress
     }
 
     func run(_ action: AttendanceAction) async throws -> AttendanceResult {
@@ -48,11 +52,15 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastConfirmMessage = nil
 
         let url = URL(string: settings.siteURL)!
+        reportProgress("세션 초기화 중...")
         await clearBrowserSession()
         prepareWebView().stopLoading()
 
+        reportProgress("접속 중...")
         try await load(freshURL(from: url))
         try await loginIfNeeded()
+
+        reportProgress("확인 중...")
         try await waitForAttendanceTabs()
         return try await clickAttendance(action)
     }
@@ -63,13 +71,18 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastConfirmMessage = nil
 
         let url = URL(string: settings.siteURL)!
+        reportProgress("세션 초기화 중...")
         await clearBrowserSession()
         prepareWebView().stopLoading()
 
+        reportProgress("접속 중...")
         try await load(freshURL(from: url))
         try await loginIfNeeded()
+
+        reportProgress("확인 중...")
         try await waitForAttendanceTabs()
 
+        reportProgress("시간 반영 중...")
         return try await displayedAttendanceSnapshot()
     }
 
@@ -153,12 +166,14 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     private func loginIfNeeded() async throws {
+        reportProgress("로그인 확인 중...")
         let isLoginPage = try await boolJS("Boolean(document.querySelector('#userId') && document.querySelector('#userPw'))")
 
         if !isLoginPage {
             return
         }
 
+        reportProgress("로그인 중...")
         let username = try jsLiteral(settings.username)
         let password = try jsLiteral(settings.password)
 
@@ -202,6 +217,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         let tabSelector = try jsLiteral(action.tabSelector)
         let submitSelector = try jsLiteral(action.submitSelector)
 
+        reportProgress("\(action.title) 선택 중...")
         let tabClicked = try await boolJS("""
         (function() {
             const tab = document.querySelector(\(tabSelector));
@@ -225,6 +241,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastAlertMessage = nil
         lastConfirmMessage = nil
 
+        reportProgress("\(action.title) 처리 중...")
         let submitted = try await boolJS("""
         (function() {
             const submit = document.querySelector(\(submitSelector));
@@ -238,6 +255,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
             throw AttendanceError.automation("\(action.title) 처리 버튼을 찾지 못했습니다.")
         }
 
+        reportProgress("결과 확인 중...")
         return try await waitForAttendanceResult(action, previousTime: previousTime)
     }
 
@@ -251,6 +269,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
                 lastObservedTime = currentTime
 
                 if isNewTime(currentTime, comparedTo: previousTime) {
+                    reportProgress("시간 반영 중...")
                     let snapshot = try await displayedAttendanceSnapshot()
                     return AttendanceResult(
                         recordedAt: currentTime,
@@ -384,6 +403,10 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         }
 
         throw AttendanceError.automation(failureMessage)
+    }
+
+    private func reportProgress(_ message: String) {
+        onProgress?(message)
     }
 
     private func boolJS(_ script: String) async throws -> Bool {

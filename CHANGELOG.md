@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.8 - 2026-04-19
+
+- Split refresh progress into connection, login, verification, and update stages.
+
 ## 0.2.7 - 2026-04-19
 
 - Kept the menu bar update state visible for the actual Bizbox login and fetch work.
