@@ -68,7 +68,7 @@ dist/Bizbox Notch.dmg
 
 ```bash
 export HOMEBREW_GITHUB_API_TOKEN="$(gh auth token)"
-brew tap hahmjuntae/bizbox-notch git@github.com:hahmjuntae/bizbox-notch.git
+brew tap hahmjuntae/bizbox-notch https://github.com/hahmjuntae/bizbox-notch.git
 brew install --cask bizbox-notch
 ```
 
