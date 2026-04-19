@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.7 - 2026-04-19
+
+- Kept the menu bar update state visible for the actual Bizbox login and fetch work.
+- Cleared the embedded browser session before each run so refreshes re-login and re-read Bizbox times.
+
 ## 0.2.6 - 2026-04-19
 
 - Added the initial native macOS menu bar app for Bizbox attendance.

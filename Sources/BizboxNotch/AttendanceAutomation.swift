@@ -48,6 +48,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastConfirmMessage = nil
 
         let url = URL(string: settings.siteURL)!
+        await clearBrowserSession()
         prepareWebView().stopLoading()
 
         try await load(freshURL(from: url))
@@ -62,6 +63,7 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastConfirmMessage = nil
 
         let url = URL(string: settings.siteURL)!
+        await clearBrowserSession()
         prepareWebView().stopLoading()
 
         try await load(freshURL(from: url))
@@ -108,6 +110,17 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         navigationContinuation = nil
         navigationTimeoutTask?.cancel()
         navigationTimeoutTask = nil
+    }
+
+    private func clearBrowserSession() async {
+        let dataStore = WKWebsiteDataStore.default()
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+
+        await withCheckedContinuation { continuation in
+            dataStore.removeData(ofTypes: dataTypes, modifiedSince: .distantPast) {
+                continuation.resume()
+            }
+        }
     }
 
     private func load(_ url: URL) async throws {

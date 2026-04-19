@@ -219,7 +219,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func keepBusyIndicatorVisible(since startedAt: Date) async {
-        let minimumDuration: TimeInterval = 1.0
+        let minimumDuration: TimeInterval = 0.0
         let remaining = minimumDuration - Date().timeIntervalSince(startedAt)
 
         if remaining > 0 {
