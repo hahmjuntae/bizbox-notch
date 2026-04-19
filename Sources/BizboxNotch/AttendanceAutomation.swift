@@ -191,10 +191,10 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         })();
         """)
         } catch {
-            if lastAlertMessage == nil {
-                // Submitting the login form can interrupt the JavaScript callback while navigation starts.
+            if let lastAlertMessage {
+                throw AttendanceError.automation(lastAlertMessage)
             } else {
-                throw error
+                // Submitting the login form can interrupt the JavaScript callback while navigation starts.
             }
         }
 
@@ -395,11 +395,15 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
                 return
             }
 
-            if lastAlertMessage != nil {
-                return
+            if let lastAlertMessage {
+                throw AttendanceError.automation(lastAlertMessage)
             }
 
             try await Task.sleep(nanoseconds: 250_000_000)
+        }
+
+        if let lastAlertMessage {
+            throw AttendanceError.automation(lastAlertMessage)
         }
 
         throw AttendanceError.automation(failureMessage)

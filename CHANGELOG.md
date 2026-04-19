@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.9 - 2026-04-19
+
+- Treated Bizbox login alerts as failures so wrong credentials no longer update the menu state.
+
 ## 0.2.8 - 2026-04-19
 
 - Split refresh progress into connection, login, verification, and update stages.
