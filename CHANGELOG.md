@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.11 - 2026-04-19
+
+- Waited for the Bizbox clock-out anchor to become active before clicking it again.
+
 ## 0.2.10 - 2026-04-19
 
 - Kept a visible failure state before returning the menu bar title to idle.

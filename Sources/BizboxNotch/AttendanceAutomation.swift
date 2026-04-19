@@ -241,6 +241,13 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         lastAlertMessage = nil
         lastConfirmMessage = nil
 
+        reportProgress("\(action.title) 버튼 확인 중...")
+        try await waitForCondition(
+            submitReadyScript(selector: action.submitSelector, code: action.code),
+            timeout: 5,
+            failureMessage: "\(action.title) 처리 버튼이 활성화되지 않았습니다."
+        )
+
         reportProgress("\(action.title) 처리 중...")
         let submitted = try await boolJS("""
         (function() {
@@ -355,6 +362,21 @@ final class AttendanceAutomation: NSObject, WKNavigationDelegate, WKUIDelegate {
         }
 
         return DateFormatting.serverFormatter.date(from: String(text[match]))
+    }
+
+    private func submitReadyScript(selector: String, code: Int) throws -> String {
+        let selector = try jsLiteral(selector)
+        let expectedOnclick = try jsLiteral("fnAttendCheck(\(code))")
+
+        return """
+        (function() {
+            const submit = document.querySelector(\(selector));
+            if (!submit) return false;
+            const onclick = submit.getAttribute("onclick") || "";
+            const visible = Boolean(submit.offsetWidth || submit.offsetHeight || submit.getClientRects().length);
+            return visible && onclick.includes(\(expectedOnclick));
+        })();
+        """
     }
 
     private func freshURL(from url: URL) -> URL {
