@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.10 - 2026-04-19
+
+- Kept a visible failure state before returning the menu bar title to idle.
+
 ## 0.2.9 - 2026-04-19
 
 - Treated Bizbox login alerts as failures so wrong credentials no longer update the menu state.

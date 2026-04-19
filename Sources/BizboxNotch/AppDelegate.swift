@@ -103,6 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             var notificationTitle: String?
             var notificationBody: String?
+            var failed = false
 
             do {
                 let result = try await automation.run(action)
@@ -124,12 +125,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 notificationTitle = "\(action.title) 완료"
                 notificationBody = result.message
             } catch {
-                statusTextItem.title = error.localizedDescription
+                failed = true
+                showFailure(error.localizedDescription)
                 notificationTitle = "\(action.title) 실패"
                 notificationBody = error.localizedDescription
             }
 
             await keepBusyIndicatorVisible(since: startedAt)
+            if failed {
+                await keepFailureVisible()
+            }
             setRunning(false, action: action)
             automationRunning = false
 
@@ -182,6 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             var notificationTitle: String?
             var notificationBody: String?
+            var failed = false
 
             do {
                 let snapshot = try await automation.fetchCurrentTimes()
@@ -193,16 +199,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     notificationBody = refreshNotificationBody(for: snapshot)
                 }
             } catch {
-                refreshMenu()
-
                 if !silent {
-                    statusTextItem.title = error.localizedDescription
+                    failed = true
+                    showFailure(error.localizedDescription)
                     notificationTitle = "시간 새로고침 실패"
                     notificationBody = error.localizedDescription
+                } else {
+                    refreshMenu()
                 }
             }
 
             await keepBusyIndicatorVisible(since: startedAt)
+            if failed {
+                await keepFailureVisible()
+            }
             automationRunning = false
             clockInItem.isEnabled = true
             clockOutItem.isEnabled = true
@@ -226,6 +236,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.update()
     }
 
+    private func showFailure(_ message: String) {
+        statusItem?.button?.image = makeStatusIcon()
+        statusItem?.button?.title = "실패"
+        statusTextItem.title = message
+        refreshTimesItem.title = "실패"
+        menu.update()
+    }
+
     private func keepBusyIndicatorVisible(since startedAt: Date) async {
         let minimumDuration: TimeInterval = 0.0
         let remaining = minimumDuration - Date().timeIntervalSince(startedAt)
@@ -233,6 +251,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if remaining > 0 {
             try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
         }
+    }
+
+    private func keepFailureVisible() async {
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
     }
 
     private func apply(_ snapshot: AttendanceSnapshot) {

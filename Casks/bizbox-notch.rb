@@ -41,8 +41,8 @@ module BizboxNotchGitHub
 end
 
 cask "bizbox-notch" do
-  version "0.2.9"
-  sha256 "bab88ab36b2bed1a1e1b16984edc5688463c2e9fa0567fc91a57e357885f2181"
+  version "0.2.10"
+  sha256 "d6578f770e6d154cd756866f906879fc1b37932d8a95d4ac1fc328ec55a3838d"
 
   url BizboxNotchGitHub.release_asset_url("v#{version}", "Bizbox-Notch-#{version}.dmg"),
       header: "Accept: application/octet-stream"
