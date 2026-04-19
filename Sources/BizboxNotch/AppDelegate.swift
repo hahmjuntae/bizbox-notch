@@ -67,14 +67,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func makePlainActionItem(title: String, action: Selector) -> NSMenuItem {
         let item = NSMenuItem()
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 180, height: 24))
         let button = NSButton(title: title, target: self, action: action)
         button.alignment = .left
         button.bezelStyle = .regularSquare
         button.isBordered = false
         button.image = nil
         button.font = .menuFont(ofSize: NSFont.systemFontSize)
-        button.frame = NSRect(x: 0, y: 0, width: 180, height: 24)
-        item.view = button
+        button.frame = NSRect(x: 18, y: 0, width: 150, height: 24)
+        container.addSubview(button)
+        item.view = container
         return item
     }
 

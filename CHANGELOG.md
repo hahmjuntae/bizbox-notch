@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.17 - 2026-04-20
+
+- Restored menu row padding while keeping the settings icon hidden.
+
 ## 0.2.16 - 2026-04-20
 
 - Replaced settings and quit menu rows with plain custom items to remove the remaining left icon.
