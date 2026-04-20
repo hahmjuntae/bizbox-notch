@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.19 - 2026-04-20
+
+- Restored native menu styling for settings and quit rows.
+
 ## 0.2.18 - 2026-04-20
 
 - Cleared stale menu times when Bizbox reports no clock-in or clock-out time.
