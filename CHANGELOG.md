@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.22 - 2026-04-20
+
+- Added configurable weekday attendance reminders with persistent action windows.
+- Kept the last failure reason visible in the status row until the next action.
+- Adjusted the reminder panel spacing so all sides have balanced padding.
+
 ## 0.2.21 - 2026-04-20
 
 - Avoided AppKit's automatic settings glyph while preserving native menu hover and spacing.

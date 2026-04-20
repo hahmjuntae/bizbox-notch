@@ -9,6 +9,13 @@ final class SettingsStore {
         static let lastSiteUpdatedAt = "lastSiteUpdatedAt"
     }
 
+    struct WorkdaySchedule {
+        let weekday: Int
+        let label: String
+        var clockIn: String
+        var clockOut: String
+    }
+
     private let defaults: UserDefaults
     private let keychain: KeychainStore
 
@@ -71,6 +78,24 @@ final class SettingsStore {
         }
     }
 
+    var workdaySchedules: [WorkdaySchedule] {
+        get {
+            [
+                schedule(for: 2, label: "월", defaultClockIn: "08:50", defaultClockOut: "18:10"),
+                schedule(for: 3, label: "화", defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 4, label: "수", defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 5, label: "목", defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 6, label: "금", defaultClockIn: "08:50", defaultClockOut: "18:10")
+            ]
+        }
+        set {
+            for schedule in newValue {
+                defaults.set(schedule.clockIn, forKey: scheduleKey(weekday: schedule.weekday, action: "clockIn"))
+                defaults.set(schedule.clockOut, forKey: scheduleKey(weekday: schedule.weekday, action: "clockOut"))
+            }
+        }
+    }
+
     func lastDate(for action: AttendanceAction) -> Date? {
         switch action {
         case .clockIn:
@@ -101,6 +126,36 @@ final class SettingsStore {
         guard !password.isEmpty else {
             throw AttendanceError.configuration("비밀번호를 설정하세요.")
         }
+
+        try validateSchedules(workdaySchedules)
+    }
+
+    func validateSchedules(_ schedules: [WorkdaySchedule]) throws {
+        for schedule in schedules {
+            guard Self.minutes(from: schedule.clockIn) != nil else {
+                throw AttendanceError.configuration("\(schedule.label)요일 출근 시간을 HH:mm 형식으로 입력하세요.")
+            }
+
+            guard Self.minutes(from: schedule.clockOut) != nil else {
+                throw AttendanceError.configuration("\(schedule.label)요일 퇴근 시간을 HH:mm 형식으로 입력하세요.")
+            }
+        }
+    }
+
+    static func minutes(from time: String) -> Int? {
+        let parts = time.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: ":")
+
+        guard
+            parts.count == 2,
+            let hour = Int(parts[0]),
+            let minute = Int(parts[1]),
+            (0...23).contains(hour),
+            (0...59).contains(minute)
+        else {
+            return nil
+        }
+
+        return hour * 60 + minute
     }
 
     private func date(forKey key: String) -> Date? {
@@ -114,5 +169,23 @@ final class SettingsStore {
         } else {
             defaults.removeObject(forKey: key)
         }
+    }
+
+    private func schedule(
+        for weekday: Int,
+        label: String,
+        defaultClockIn: String,
+        defaultClockOut: String
+    ) -> WorkdaySchedule {
+        WorkdaySchedule(
+            weekday: weekday,
+            label: label,
+            clockIn: defaults.string(forKey: scheduleKey(weekday: weekday, action: "clockIn")) ?? defaultClockIn,
+            clockOut: defaults.string(forKey: scheduleKey(weekday: weekday, action: "clockOut")) ?? defaultClockOut
+        )
+    }
+
+    private func scheduleKey(weekday: Int, action: String) -> String {
+        "workday.\(weekday).\(action)"
     }
 }

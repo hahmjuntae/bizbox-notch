@@ -7,13 +7,14 @@ final class SettingsWindowController: NSWindowController {
     private let siteURLField = NSTextField()
     private let usernameField = NSTextField()
     private let passwordField = NSSecureTextField()
+    private var scheduleFields: [Int: (clockIn: NSTextField, clockOut: NSTextField)] = [:]
 
     init(settings: SettingsStore, onSave: @escaping () -> Void) {
         self.settings = settings
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 260),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 470),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -63,6 +64,39 @@ final class SettingsWindowController: NSWindowController {
         form.rowSpacing = 12
         form.columnSpacing = 12
 
+        let scheduleTitle = NSTextField(labelWithString: "알림 시간")
+        scheduleTitle.font = .boldSystemFont(ofSize: 13)
+
+        let scheduleHeader = NSGridView(views: [
+            [NSTextField(labelWithString: ""), NSTextField(labelWithString: "출근"), NSTextField(labelWithString: "퇴근")]
+        ])
+        scheduleHeader.column(at: 0).width = 40
+        scheduleHeader.column(at: 1).width = 120
+        scheduleHeader.column(at: 2).width = 120
+        scheduleHeader.columnSpacing = 12
+
+        let scheduleGrid = NSGridView()
+        scheduleGrid.columnSpacing = 12
+        scheduleGrid.rowSpacing = 8
+
+        for schedule in settings.workdaySchedules {
+            let clockInField = NSTextField(string: schedule.clockIn)
+            let clockOutField = NSTextField(string: schedule.clockOut)
+            clockInField.placeholderString = "HH:mm"
+            clockOutField.placeholderString = "HH:mm"
+            scheduleFields[schedule.weekday] = (clockInField, clockOutField)
+
+            scheduleGrid.addRow(with: [
+                NSTextField(labelWithString: schedule.label),
+                clockInField,
+                clockOutField
+            ])
+        }
+
+        scheduleGrid.column(at: 0).width = 40
+        scheduleGrid.column(at: 1).width = 120
+        scheduleGrid.column(at: 2).width = 120
+
         let saveButton = NSButton(title: "저장", target: self, action: #selector(save))
         saveButton.keyEquivalent = "\r"
 
@@ -78,7 +112,7 @@ final class SettingsWindowController: NSWindowController {
         buttonRow.orientation = .horizontal
         buttonRow.distribution = .fill
 
-        let stack = NSStackView(views: [titleLabel, description, form, buttonRow])
+        let stack = NSStackView(views: [titleLabel, description, form, scheduleTitle, scheduleHeader, scheduleGrid, buttonRow])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 18
@@ -99,12 +133,35 @@ final class SettingsWindowController: NSWindowController {
         siteURLField.stringValue = settings.siteURL
         usernameField.stringValue = settings.username
         passwordField.stringValue = settings.password
+
+        for schedule in settings.workdaySchedules {
+            scheduleFields[schedule.weekday]?.clockIn.stringValue = schedule.clockIn
+            scheduleFields[schedule.weekday]?.clockOut.stringValue = schedule.clockOut
+        }
     }
 
     @objc private func save() {
+        let schedules = settings.workdaySchedules.map { schedule in
+            SettingsStore.WorkdaySchedule(
+                weekday: schedule.weekday,
+                label: schedule.label,
+                clockIn: scheduleFields[schedule.weekday]?.clockIn.stringValue ?? schedule.clockIn,
+                clockOut: scheduleFields[schedule.weekday]?.clockOut.stringValue ?? schedule.clockOut
+            )
+        }
+
+        do {
+            try settings.validateSchedules(schedules)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
+            return
+        }
+
         settings.siteURL = siteURLField.stringValue
         settings.username = usernameField.stringValue
         settings.password = passwordField.stringValue
+        settings.workdaySchedules = schedules
         onSave()
         window?.close()
     }

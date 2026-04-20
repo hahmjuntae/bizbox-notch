@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     private lazy var settingsWindowController = SettingsWindowController(settings: settings) { [weak self] in
         self?.refreshMenu()
+        self?.startScheduleTimer()
     }
 
     private var statusItem: NSStatusItem?
@@ -20,12 +21,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let refreshTimesItem = NSMenuItem(title: "새로고침", action: #selector(refreshTimesFromMenu), keyEquivalent: "")
     private let statusTextItem = NSMenuItem(title: "대기 중", action: nil, keyEquivalent: "")
     private var automationRunning = false
+    private var scheduleTimer: Timer?
+    private var reminderWindowController: ReminderWindowController?
+    private var triggeredReminderKeys = Set<String>()
+    private var lastFailureMessage: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
         configureStatusItem()
         refreshMenu()
+        startScheduleTimer()
         refreshTimesSilentlyIfConfigured()
     }
 
@@ -71,6 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if settings.username.isEmpty {
             statusTextItem.title = "설정 필요"
+        } else if let lastFailureMessage {
+            statusTextItem.title = "실패: \(lastFailureMessage)"
         } else if let lastSiteUpdatedAt = settings.lastSiteUpdatedAt {
             statusTextItem.title = "최근 업데이트: \(DateFormatting.menuTime(lastSiteUpdatedAt))"
         } else {
@@ -94,11 +102,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             try settings.validate()
         } catch {
+            lastFailureMessage = error.localizedDescription
+            refreshMenu()
             showNotification(title: "\(action.title) 실패", body: error.localizedDescription)
             showSettingsWindow()
             return
         }
 
+        lastFailureMessage = nil
         automationRunning = true
         let startedAt = Date()
         setRunning(true, action: action)
@@ -129,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 notificationBody = result.message
             } catch {
                 failed = true
+                lastFailureMessage = error.localizedDescription
                 showFailure(error.localizedDescription)
                 notificationTitle = "\(action.title) 실패"
                 notificationBody = error.localizedDescription
@@ -179,6 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        lastFailureMessage = nil
         automationRunning = true
         let startedAt = Date()
         clockInItem.isEnabled = false
@@ -204,6 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 if !silent {
                     failed = true
+                    lastFailureMessage = error.localizedDescription
                     showFailure(error.localizedDescription)
                     notificationTitle = "새로고침 실패"
                     notificationBody = error.localizedDescription
@@ -223,6 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             refreshTimesItem.title = "새로고침"
             statusItem?.button?.image = makeStatusIcon()
             statusItem?.button?.title = "근태"
+            refreshMenu()
             menu.update()
 
             if let notificationTitle, let notificationBody {
@@ -270,6 +285,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let clockIn = DateFormatting.menuTime(snapshot.clockInAt)
         let clockOut = DateFormatting.menuTime(snapshot.clockOutAt)
         return "출근 \(clockIn) / 퇴근 \(clockOut)"
+    }
+
+    private func startScheduleTimer() {
+        scheduleTimer?.invalidate()
+        scheduleTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.checkScheduleReminder()
+            }
+        }
+        checkScheduleReminder()
+    }
+
+    private func checkScheduleReminder(now: Date = Date()) {
+        guard reminderWindowController == nil else {
+            return
+        }
+
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: now)
+        guard let schedule = settings.workdaySchedules.first(where: { $0.weekday == weekday }) else {
+            return
+        }
+
+        let currentMinute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
+
+        if shouldShowClockInReminder(schedule: schedule, currentMinute: currentMinute) {
+            showScheduleReminder(.clockIn, scheduledTime: schedule.clockIn, date: now)
+            return
+        }
+
+        if shouldShowClockOutReminder(schedule: schedule, currentMinute: currentMinute) {
+            showScheduleReminder(.clockOut, scheduledTime: schedule.clockOut, date: now)
+        }
+    }
+
+    private func shouldShowClockInReminder(schedule: SettingsStore.WorkdaySchedule, currentMinute: Int) -> Bool {
+        guard let clockInMinute = SettingsStore.minutes(from: schedule.clockIn) else {
+            return false
+        }
+
+        let reminderMinute = max(0, clockInMinute - 5)
+        return currentMinute >= reminderMinute && currentMinute <= clockInMinute
+    }
+
+    private func shouldShowClockOutReminder(schedule: SettingsStore.WorkdaySchedule, currentMinute: Int) -> Bool {
+        guard let clockOutMinute = SettingsStore.minutes(from: schedule.clockOut) else {
+            return false
+        }
+
+        return currentMinute >= clockOutMinute && currentMinute <= clockOutMinute + 5
+    }
+
+    private func showScheduleReminder(_ action: AttendanceAction, scheduledTime: String, date: Date) {
+        let key = reminderKey(action: action, scheduledTime: scheduledTime, date: date)
+        guard !triggeredReminderKeys.contains(key) else {
+            return
+        }
+
+        triggeredReminderKeys.insert(key)
+
+        let controller = ReminderWindowController(
+            action: action,
+            scheduledTime: scheduledTime,
+            onAction: { [weak self] action in
+                self?.run(action)
+            },
+            onDismiss: { [weak self] in
+                self?.reminderWindowController = nil
+            }
+        )
+        reminderWindowController = controller
+        controller.showWindow(nil)
+    }
+
+    private func reminderKey(action: AttendanceAction, scheduledTime: String, date: Date) -> String {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return "\(components.year ?? 0)-\(components.month ?? 0)-\(components.day ?? 0)-\(action.title)-\(scheduledTime)"
     }
 
     private func makeStatusIcon() -> NSImage {
