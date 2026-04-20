@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.21 - 2026-04-20
+
+- Avoided AppKit's automatic settings glyph while preserving native menu hover and spacing.
+
 ## 0.2.20 - 2026-04-20
 
 - Renamed the settings row to avoid the automatic macOS settings glyph while preserving native menu styling.

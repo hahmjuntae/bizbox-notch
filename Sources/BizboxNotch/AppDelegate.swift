@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(statusTextItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "설정", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "설정\u{200B}", action: #selector(showSettingsWindow), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "종료", action: #selector(quit), keyEquivalent: ""))
 
         menu.items.forEach { $0.target = $0.target ?? self }
@@ -95,7 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try settings.validate()
         } catch {
             showNotification(title: "\(action.title) 실패", body: error.localizedDescription)
-            openSettings()
+            showSettingsWindow()
             return
         }
 
@@ -315,7 +315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return image
     }
 
-    @objc private func openSettings() {
+    @objc private func showSettingsWindow() {
         menu.cancelTracking()
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController.showWindow(nil)
