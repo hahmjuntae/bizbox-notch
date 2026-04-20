@@ -56,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(statusTextItem)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "설정...", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "설정", action: #selector(openSettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "종료", action: #selector(quit), keyEquivalent: ""))
 
         menu.items.forEach { $0.target = $0.target ?? self }

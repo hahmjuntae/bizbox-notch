@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.20 - 2026-04-20
+
+- Renamed the settings row to avoid the automatic macOS settings glyph while preserving native menu styling.
+
 ## 0.2.19 - 2026-04-20
 
 - Restored native menu styling for settings and quit rows.
