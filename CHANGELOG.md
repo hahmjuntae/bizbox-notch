@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.23 - 2026-04-23
+
+- Added a settings option to launch Bizbox Notch automatically at login.
+
 ## 0.2.22 - 2026-04-20
 
 - Added configurable weekday attendance reminders with persistent action windows.

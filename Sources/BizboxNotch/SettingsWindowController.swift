@@ -7,6 +7,7 @@ final class SettingsWindowController: NSWindowController {
     private let siteURLField = NSTextField()
     private let usernameField = NSTextField()
     private let passwordField = NSSecureTextField()
+    private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "로그인 시 실행", target: nil, action: nil)
     private var scheduleFields: [Int: (clockIn: NSTextField, clockOut: NSTextField)] = [:]
 
     init(settings: SettingsStore, onSave: @escaping () -> Void) {
@@ -14,7 +15,7 @@ final class SettingsWindowController: NSWindowController {
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 470),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 500),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -112,7 +113,7 @@ final class SettingsWindowController: NSWindowController {
         buttonRow.orientation = .horizontal
         buttonRow.distribution = .fill
 
-        let stack = NSStackView(views: [titleLabel, description, form, scheduleTitle, scheduleHeader, scheduleGrid, buttonRow])
+        let stack = NSStackView(views: [titleLabel, description, form, launchAtLoginCheckbox, scheduleTitle, scheduleHeader, scheduleGrid, buttonRow])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 18
@@ -133,6 +134,7 @@ final class SettingsWindowController: NSWindowController {
         siteURLField.stringValue = settings.siteURL
         usernameField.stringValue = settings.username
         passwordField.stringValue = settings.password
+        launchAtLoginCheckbox.state = LoginItemManager.shared.isEnabled ? .on : .off
 
         for schedule in settings.workdaySchedules {
             scheduleFields[schedule.weekday]?.clockIn.stringValue = schedule.clockIn
@@ -162,6 +164,13 @@ final class SettingsWindowController: NSWindowController {
         settings.username = usernameField.stringValue
         settings.password = passwordField.stringValue
         settings.workdaySchedules = schedules
+        do {
+            try LoginItemManager.shared.setEnabled(launchAtLoginCheckbox.state == .on)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
+            return
+        }
         onSave()
         window?.close()
     }
