@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.27 - 2026-04-23
+
+- Restored native stepper time pickers while keeping 24-hour reminder times.
+
 ## 0.2.26 - 2026-04-23
 
 - Switched reminder time pickers to a compact 24-hour field without AM/PM segments.
