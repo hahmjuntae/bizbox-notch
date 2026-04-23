@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.26 - 2026-04-23
+
+- Switched reminder time pickers to a compact 24-hour field without AM/PM segments.
+
 ## 0.2.25 - 2026-04-23
 
 - Replaced reminder time text fields with native time pickers.

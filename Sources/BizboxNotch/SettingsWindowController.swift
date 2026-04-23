@@ -185,8 +185,9 @@ final class SettingsWindowController: NSWindowController {
 
     private func makeTimePicker(_ time: String) -> NSDatePicker {
         let picker = NSDatePicker()
-        picker.datePickerStyle = .textFieldAndStepper
+        picker.datePickerStyle = .textField
         picker.datePickerElements = [.hourMinute]
+        picker.locale = Locale(identifier: "en_GB")
         picker.dateValue = DateFormatting.scheduleDate(time)
         picker.timeZone = TimeZone(identifier: "Asia/Seoul")
         return picker

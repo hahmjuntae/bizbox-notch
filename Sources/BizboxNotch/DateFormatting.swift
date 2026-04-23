@@ -18,7 +18,7 @@ enum DateFormatting {
 
     static let scheduleFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.locale = Locale(identifier: "en_GB")
         formatter.timeZone = TimeZone(identifier: "Asia/Seoul")
         formatter.dateFormat = "HH:mm"
         return formatter
