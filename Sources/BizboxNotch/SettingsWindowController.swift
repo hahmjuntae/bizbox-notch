@@ -8,7 +8,7 @@ final class SettingsWindowController: NSWindowController {
     private let usernameField = NSTextField()
     private let passwordField = NSSecureTextField()
     private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "로그인 시 실행", target: nil, action: nil)
-    private var scheduleFields: [Int: (clockIn: NSTextField, clockOut: NSTextField)] = [:]
+    private var scheduleFields: [Int: (clockIn: NSDatePicker, clockOut: NSDatePicker)] = [:]
 
     init(settings: SettingsStore, onSave: @escaping () -> Void) {
         self.settings = settings
@@ -81,10 +81,8 @@ final class SettingsWindowController: NSWindowController {
         scheduleGrid.rowSpacing = 8
 
         for schedule in settings.workdaySchedules {
-            let clockInField = NSTextField(string: schedule.clockIn)
-            let clockOutField = NSTextField(string: schedule.clockOut)
-            clockInField.placeholderString = "HH:mm"
-            clockOutField.placeholderString = "HH:mm"
+            let clockInField = makeTimePicker(schedule.clockIn)
+            let clockOutField = makeTimePicker(schedule.clockOut)
             scheduleFields[schedule.weekday] = (clockInField, clockOutField)
 
             scheduleGrid.addRow(with: [
@@ -137,8 +135,8 @@ final class SettingsWindowController: NSWindowController {
         launchAtLoginCheckbox.state = LoginItemManager.shared.isEnabled ? .on : .off
 
         for schedule in settings.workdaySchedules {
-            scheduleFields[schedule.weekday]?.clockIn.stringValue = schedule.clockIn
-            scheduleFields[schedule.weekday]?.clockOut.stringValue = schedule.clockOut
+            scheduleFields[schedule.weekday]?.clockIn.dateValue = DateFormatting.scheduleDate(schedule.clockIn)
+            scheduleFields[schedule.weekday]?.clockOut.dateValue = DateFormatting.scheduleDate(schedule.clockOut)
         }
     }
 
@@ -147,8 +145,8 @@ final class SettingsWindowController: NSWindowController {
             SettingsStore.WorkdaySchedule(
                 weekday: schedule.weekday,
                 label: schedule.label,
-                clockIn: scheduleFields[schedule.weekday]?.clockIn.stringValue ?? schedule.clockIn,
-                clockOut: scheduleFields[schedule.weekday]?.clockOut.stringValue ?? schedule.clockOut
+                clockIn: scheduleFields[schedule.weekday].map { DateFormatting.scheduleTime($0.clockIn.dateValue) } ?? schedule.clockIn,
+                clockOut: scheduleFields[schedule.weekday].map { DateFormatting.scheduleTime($0.clockOut.dateValue) } ?? schedule.clockOut
             )
         }
 
@@ -183,5 +181,14 @@ final class SettingsWindowController: NSWindowController {
         let label = NSTextField(labelWithString: text)
         label.alignment = .right
         return label
+    }
+
+    private func makeTimePicker(_ time: String) -> NSDatePicker {
+        let picker = NSDatePicker()
+        picker.datePickerStyle = .textFieldAndStepper
+        picker.datePickerElements = [.hourMinute]
+        picker.dateValue = DateFormatting.scheduleDate(time)
+        picker.timeZone = TimeZone(identifier: "Asia/Seoul")
+        return picker
     }
 }

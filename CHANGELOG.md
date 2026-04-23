@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.25 - 2026-04-23
+
+- Replaced reminder time text fields with native time pickers.
+
 ## 0.2.24 - 2026-04-23
 
 - Changed schedule fields to represent actual reminder times for both clock-in and clock-out.
