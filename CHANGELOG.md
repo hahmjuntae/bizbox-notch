@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.28 - 2026-04-23
+
+- Added a custom AM/PM hour-minute popover for reminder time selection.
+
 ## 0.2.27 - 2026-04-23
 
 - Restored native stepper time pickers while keeping 24-hour reminder times.

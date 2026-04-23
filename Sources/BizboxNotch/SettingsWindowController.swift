@@ -8,7 +8,7 @@ final class SettingsWindowController: NSWindowController {
     private let usernameField = NSTextField()
     private let passwordField = NSSecureTextField()
     private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "로그인 시 실행", target: nil, action: nil)
-    private var scheduleFields: [Int: (clockIn: NSDatePicker, clockOut: NSDatePicker)] = [:]
+    private var scheduleFields: [Int: (clockIn: TimePickerButton, clockOut: TimePickerButton)] = [:]
 
     init(settings: SettingsStore, onSave: @escaping () -> Void) {
         self.settings = settings
@@ -135,8 +135,8 @@ final class SettingsWindowController: NSWindowController {
         launchAtLoginCheckbox.state = LoginItemManager.shared.isEnabled ? .on : .off
 
         for schedule in settings.workdaySchedules {
-            scheduleFields[schedule.weekday]?.clockIn.dateValue = DateFormatting.scheduleDate(schedule.clockIn)
-            scheduleFields[schedule.weekday]?.clockOut.dateValue = DateFormatting.scheduleDate(schedule.clockOut)
+            scheduleFields[schedule.weekday]?.clockIn.time24 = schedule.clockIn
+            scheduleFields[schedule.weekday]?.clockOut.time24 = schedule.clockOut
         }
     }
 
@@ -145,8 +145,8 @@ final class SettingsWindowController: NSWindowController {
             SettingsStore.WorkdaySchedule(
                 weekday: schedule.weekday,
                 label: schedule.label,
-                clockIn: scheduleFields[schedule.weekday].map { DateFormatting.scheduleTime($0.clockIn.dateValue) } ?? schedule.clockIn,
-                clockOut: scheduleFields[schedule.weekday].map { DateFormatting.scheduleTime($0.clockOut.dateValue) } ?? schedule.clockOut
+                clockIn: scheduleFields[schedule.weekday]?.clockIn.time24 ?? schedule.clockIn,
+                clockOut: scheduleFields[schedule.weekday]?.clockOut.time24 ?? schedule.clockOut
             )
         }
 
@@ -183,13 +183,7 @@ final class SettingsWindowController: NSWindowController {
         return label
     }
 
-    private func makeTimePicker(_ time: String) -> NSDatePicker {
-        let picker = NSDatePicker()
-        picker.datePickerStyle = .textFieldAndStepper
-        picker.datePickerElements = [.hourMinute]
-        picker.locale = Locale(identifier: "en_GB")
-        picker.dateValue = DateFormatting.scheduleDate(time)
-        picker.timeZone = TimeZone(identifier: "Asia/Seoul")
-        return picker
+    private func makeTimePicker(_ time: String) -> TimePickerButton {
+        TimePickerButton(time24: time)
     }
 }
