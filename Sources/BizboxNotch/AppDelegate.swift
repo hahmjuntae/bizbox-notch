@@ -310,31 +310,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let currentMinute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
 
-        if shouldShowClockInReminder(schedule: schedule, currentMinute: currentMinute) {
+        if shouldShowReminder(at: schedule.clockIn, currentMinute: currentMinute) {
             showScheduleReminder(.clockIn, scheduledTime: schedule.clockIn, date: now)
             return
         }
 
-        if shouldShowClockOutReminder(schedule: schedule, currentMinute: currentMinute) {
+        if shouldShowReminder(at: schedule.clockOut, currentMinute: currentMinute) {
             showScheduleReminder(.clockOut, scheduledTime: schedule.clockOut, date: now)
         }
     }
 
-    private func shouldShowClockInReminder(schedule: SettingsStore.WorkdaySchedule, currentMinute: Int) -> Bool {
-        guard let clockInMinute = SettingsStore.minutes(from: schedule.clockIn) else {
+    private func shouldShowReminder(at time: String, currentMinute: Int) -> Bool {
+        guard let reminderMinute = SettingsStore.minutes(from: time) else {
             return false
         }
 
-        let reminderMinute = max(0, clockInMinute - 5)
-        return currentMinute >= reminderMinute && currentMinute <= clockInMinute
-    }
-
-    private func shouldShowClockOutReminder(schedule: SettingsStore.WorkdaySchedule, currentMinute: Int) -> Bool {
-        guard let clockOutMinute = SettingsStore.minutes(from: schedule.clockOut) else {
-            return false
-        }
-
-        return currentMinute >= clockOutMinute && currentMinute <= clockOutMinute + 5
+        return currentMinute >= reminderMinute && currentMinute <= reminderMinute + 5
     }
 
     private func showScheduleReminder(_ action: AttendanceAction, scheduledTime: String, date: Date) {

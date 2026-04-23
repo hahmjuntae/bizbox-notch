@@ -65,7 +65,7 @@ final class SettingsWindowController: NSWindowController {
         form.rowSpacing = 12
         form.columnSpacing = 12
 
-        let scheduleTitle = NSTextField(labelWithString: "알림 시간")
+        let scheduleTitle = NSTextField(labelWithString: "알림 발생 시간")
         scheduleTitle.font = .boldSystemFont(ofSize: 13)
 
         let scheduleHeader = NSGridView(views: [

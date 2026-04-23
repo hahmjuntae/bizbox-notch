@@ -53,9 +53,7 @@ final class ReminderWindowController: NSWindowController {
         let titleLabel = NSTextField(labelWithString: "\(action.title) 알림")
         titleLabel.font = .boldSystemFont(ofSize: 17)
 
-        let message = action == .clockIn
-            ? "\(scheduledTime) 출근 시간 5분 전입니다."
-            : "\(scheduledTime) 퇴근 시간입니다."
+        let message = "\(scheduledTime) \(action.title) 알림 시간입니다."
         let messageLabel = NSTextField(wrappingLabelWithString: message)
         messageLabel.textColor = .secondaryLabelColor
 

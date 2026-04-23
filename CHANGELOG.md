@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.24 - 2026-04-23
+
+- Changed schedule fields to represent actual reminder times for both clock-in and clock-out.
+
 ## 0.2.23 - 2026-04-23
 
 - Added a settings option to launch Bizbox Notch automatically at login.
