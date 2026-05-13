@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var settingsWindowController = SettingsWindowController(settings: settings) { [weak self] in
         self?.refreshMenu()
         self?.startScheduleTimer()
+        self?.scheduleWorkdayNotifications()
     }
 
     private var statusItem: NSStatusItem?
@@ -28,7 +29,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] _, _ in
+            Task { @MainActor in
+                self?.scheduleWorkdayNotifications()
+            }
+        }
         configureStatusItem()
         refreshMenu()
         startScheduleTimer()
@@ -353,6 +358,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func reminderKey(action: AttendanceAction, scheduledTime: String, date: Date) -> String {
         let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return "\(components.year ?? 0)-\(components.month ?? 0)-\(components.day ?? 0)-\(action.title)-\(scheduledTime)"
+    }
+
+    private func scheduleWorkdayNotifications() {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: workdayNotificationIdentifiers())
+
+        for schedule in settings.workdaySchedules {
+            addWorkdayNotification(center: center, schedule: schedule, action: .clockIn, time: schedule.clockIn)
+            addWorkdayNotification(center: center, schedule: schedule, action: .clockOut, time: schedule.clockOut)
+        }
+    }
+
+    private func addWorkdayNotification(center: UNUserNotificationCenter, schedule: SettingsStore.WorkdaySchedule, action: AttendanceAction, time: String) {
+        guard let dateComponents = notificationDateComponents(weekday: schedule.weekday, time: time) else {
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "\(action.title) 알림"
+        content.body = "\(time) \(action.title) 알림 시간입니다."
+        content.sound = .default
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(
+            identifier: workdayNotificationIdentifier(weekday: schedule.weekday, action: action),
+            content: content,
+            trigger: trigger
+        )
+        center.add(request)
+    }
+
+    private func notificationDateComponents(weekday: Int, time: String) -> DateComponents? {
+        guard let minuteOfDay = SettingsStore.minutes(from: time) else {
+            return nil
+        }
+
+        var components = DateComponents()
+        components.weekday = weekday
+        components.hour = minuteOfDay / 60
+        components.minute = minuteOfDay % 60
+        return components
+    }
+
+    private func workdayNotificationIdentifiers() -> [String] {
+        settings.workdaySchedules.flatMap { schedule in
+            [
+                workdayNotificationIdentifier(weekday: schedule.weekday, action: .clockIn),
+                workdayNotificationIdentifier(weekday: schedule.weekday, action: .clockOut)
+            ]
+        }
+    }
+
+    private func workdayNotificationIdentifier(weekday: Int, action: AttendanceAction) -> String {
+        "workday-reminder-\(weekday)-\(action.code)"
     }
 
     private func makeStatusIcon() -> NSImage {

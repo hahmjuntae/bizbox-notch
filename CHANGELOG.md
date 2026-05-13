@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.29 - 2026-05-13
+
+- Scheduled weekday clock-in and clock-out reminders as recurring macOS notifications.
+
 ## 0.2.28 - 2026-04-23
 
 - Added a custom AM/PM hour-minute popover for reminder time selection.
