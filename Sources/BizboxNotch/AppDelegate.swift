@@ -8,9 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self?.showProgress(message)
     }
     private lazy var settingsWindowController = SettingsWindowController(settings: settings) { [weak self] in
-        self?.refreshMenu()
-        self?.startScheduleTimer()
-        self?.scheduleWorkdayNotifications()
+        self?.applySettingsChanges()
     }
 
     private var statusItem: NSStatusItem?
@@ -29,9 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] _, _ in
-            Task { @MainActor in
-                self?.scheduleWorkdayNotifications()
+        if supportsUserNotifications {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] _, _ in
+                Task { @MainActor in
+                    self?.scheduleWorkdayNotifications()
+                }
             }
         }
         configureStatusItem()
@@ -294,11 +294,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startScheduleTimer() {
         scheduleTimer?.invalidate()
-        scheduleTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 10, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkScheduleReminder()
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        scheduleTimer = timer
         checkScheduleReminder()
     }
 
@@ -315,22 +317,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let currentMinute = calendar.component(.hour, from: now) * 60 + calendar.component(.minute, from: now)
 
-        if shouldShowReminder(at: schedule.clockIn, currentMinute: currentMinute) {
-            showScheduleReminder(.clockIn, scheduledTime: schedule.clockIn, date: now)
-            return
-        }
-
-        if shouldShowReminder(at: schedule.clockOut, currentMinute: currentMinute) {
-            showScheduleReminder(.clockOut, scheduledTime: schedule.clockOut, date: now)
+        if let reminder = dueReminder(
+            schedule: schedule,
+            currentMinute: currentMinute,
+            date: now
+        ) {
+            showScheduleReminder(reminder.action, scheduledTime: reminder.scheduledTime, date: now)
         }
     }
 
-    private func shouldShowReminder(at time: String, currentMinute: Int) -> Bool {
-        guard let reminderMinute = SettingsStore.minutes(from: time) else {
-            return false
-        }
+    private func dueReminder(
+        schedule: SettingsStore.WorkdaySchedule,
+        currentMinute: Int,
+        date: Date
+    ) -> (action: AttendanceAction, scheduledTime: String)? {
+        [
+            (action: AttendanceAction.clockIn, scheduledTime: schedule.clockIn),
+            (action: AttendanceAction.clockOut, scheduledTime: schedule.clockOut)
+        ]
+            .compactMap { reminder -> (action: AttendanceAction, scheduledTime: String, minute: Int)? in
+                guard let minute = SettingsStore.minutes(from: reminder.scheduledTime) else {
+                    return nil
+                }
 
-        return currentMinute >= reminderMinute && currentMinute <= reminderMinute + 5
+                return (reminder.action, reminder.scheduledTime, minute)
+            }
+            .filter { reminder in
+                currentMinute >= reminder.minute
+                    && !triggeredReminderKeys.contains(
+                        reminderKey(
+                            action: reminder.action,
+                            scheduledTime: reminder.scheduledTime,
+                            date: date
+                        )
+                    )
+            }
+            .max { left, right in
+                left.minute < right.minute
+            }
+            .map { reminder in
+                (reminder.action, reminder.scheduledTime)
+            }
     }
 
     private func showScheduleReminder(_ action: AttendanceAction, scheduledTime: String, date: Date) {
@@ -361,6 +388,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func scheduleWorkdayNotifications() {
+        guard supportsUserNotifications else {
+            return
+        }
+
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: workdayNotificationIdentifiers())
 
@@ -412,6 +443,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func workdayNotificationIdentifier(weekday: Int, action: AttendanceAction) -> String {
         "workday-reminder-\(weekday)-\(action.code)"
+    }
+
+    private var supportsUserNotifications: Bool {
+        Bundle.main.bundleIdentifier != nil
+    }
+
+    private func applySettingsChanges() {
+        refreshMenu()
+        resetScheduleReminders()
+        startScheduleTimer()
+        scheduleWorkdayNotifications()
+    }
+
+    private func resetScheduleReminders() {
+        triggeredReminderKeys.removeAll()
+        reminderWindowController?.close()
+        reminderWindowController = nil
     }
 
     private func makeStatusIcon() -> NSImage {

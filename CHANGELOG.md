@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.30 - 2026-05-14
+
+- Re-applied reminder schedules immediately after settings are saved.
+- Removed the narrow five-minute reminder window so changed times still fire after timer delays.
+- Kept reminder checks active during menu and window interactions.
+
 ## 0.2.29 - 2026-05-13
 
 - Scheduled weekday clock-in and clock-out reminders as recurring macOS notifications.
