@@ -1,6 +1,8 @@
 import Foundation
 
 final class SettingsStore {
+    static let defaultSiteURL = "https://gw.forbiz.co.kr/gw/userMain.do"
+
     private enum Keys {
         static let siteURL = "siteURL"
         static let username = "username"
@@ -26,10 +28,15 @@ final class SettingsStore {
 
     var siteURL: String {
         get {
-            defaults.string(forKey: Keys.siteURL) ?? "https://gw.forbiz.co.kr/gw/userMain.do"
+            Self.normalizedSiteURL(defaults.string(forKey: Keys.siteURL) ?? "")
         }
         set {
-            defaults.set(newValue.trimmingCharacters(in: .whitespacesAndNewlines), forKey: Keys.siteURL)
+            let normalizedSiteURL = Self.normalizedSiteURL(newValue)
+            if normalizedSiteURL == Self.defaultSiteURL {
+                defaults.removeObject(forKey: Keys.siteURL)
+            } else {
+                defaults.set(normalizedSiteURL, forKey: Keys.siteURL)
+            }
         }
     }
 
@@ -115,11 +122,18 @@ final class SettingsStore {
     }
 
     func validate() throws {
-        guard URL(string: siteURL)?.scheme?.hasPrefix("http") == true else {
-            throw AttendanceError.configuration("사이트 URL을 확인하세요.")
-        }
+        try validate(
+            siteURL: siteURL,
+            username: username,
+            password: password,
+            schedules: workdaySchedules
+        )
+    }
 
-        guard !username.isEmpty else {
+    func validate(siteURL: String, username: String, password: String, schedules: [WorkdaySchedule]) throws {
+        try Self.validateSiteURL(siteURL)
+
+        guard !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AttendanceError.configuration("아이디를 설정하세요.")
         }
 
@@ -127,7 +141,7 @@ final class SettingsStore {
             throw AttendanceError.configuration("비밀번호를 설정하세요.")
         }
 
-        try validateSchedules(workdaySchedules)
+        try validateSchedules(schedules)
     }
 
     func validateSchedules(_ schedules: [WorkdaySchedule]) throws {
@@ -156,6 +170,23 @@ final class SettingsStore {
         }
 
         return hour * 60 + minute
+    }
+
+    static func normalizedSiteURL(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? defaultSiteURL : trimmed
+    }
+
+    static func validateSiteURL(_ value: String) throws {
+        let normalizedSiteURL = normalizedSiteURL(value)
+        guard
+            let components = URLComponents(string: normalizedSiteURL),
+            components.scheme == "https",
+            components.host == "gw.forbiz.co.kr",
+            components.path.hasPrefix("/gw/")
+        else {
+            throw AttendanceError.configuration("사이트 URL은 https://gw.forbiz.co.kr/gw/... 주소여야 합니다.")
+        }
     }
 
     private func date(forKey key: String) -> Date? {

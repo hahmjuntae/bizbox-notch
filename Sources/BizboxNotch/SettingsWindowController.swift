@@ -141,6 +141,9 @@ final class SettingsWindowController: NSWindowController {
     }
 
     @objc private func save() {
+        let siteURL = SettingsStore.normalizedSiteURL(siteURLField.stringValue)
+        let username = usernameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let password = passwordField.stringValue
         let schedules = settings.workdaySchedules.map { schedule in
             SettingsStore.WorkdaySchedule(
                 weekday: schedule.weekday,
@@ -151,16 +154,21 @@ final class SettingsWindowController: NSWindowController {
         }
 
         do {
-            try settings.validateSchedules(schedules)
+            try settings.validate(
+                siteURL: siteURL,
+                username: username,
+                password: password,
+                schedules: schedules
+            )
         } catch {
             let alert = NSAlert(error: error)
             alert.runModal()
             return
         }
 
-        settings.siteURL = siteURLField.stringValue
-        settings.username = usernameField.stringValue
-        settings.password = passwordField.stringValue
+        settings.siteURL = siteURL
+        settings.username = username
+        settings.password = password
         settings.workdaySchedules = schedules
         do {
             try LoginItemManager.shared.setEnabled(launchAtLoginCheckbox.state == .on)

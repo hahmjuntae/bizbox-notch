@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.32 - 2026-05-15
+
+- Restored the default Bizbox URL when saved settings contain an empty URL.
+- Validated login settings before saving reminder changes.
+
 ## 0.2.31 - 2026-05-15
 
 - Kept clock-in and clock-out failures on the menu instead of opening settings automatically.
