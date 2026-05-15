@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0 - 2026-05-15
+
+- Marked the completed macOS menu bar app as the first stable release.
+
 ## 0.2.33 - 2026-05-15
 
 - Limited reminder panels to the exact configured minute so old reminders do not appear at app launch.
