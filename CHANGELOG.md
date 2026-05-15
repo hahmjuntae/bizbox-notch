@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.31 - 2026-05-15
+
+- Kept clock-in and clock-out failures on the menu instead of opening settings automatically.
+
 ## 0.2.30 - 2026-05-14
 
 - Re-applied reminder schedules immediately after settings are saved.

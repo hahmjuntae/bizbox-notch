@@ -110,7 +110,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             lastFailureMessage = error.localizedDescription
             refreshMenu()
             showNotification(title: "\(action.title) 실패", body: error.localizedDescription)
-            showSettingsWindow()
             return
         }
 
