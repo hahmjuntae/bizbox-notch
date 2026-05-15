@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.33 - 2026-05-15
+
+- Limited reminder panels to the exact configured minute so old reminders do not appear at app launch.
+
 ## 0.2.32 - 2026-05-15
 
 - Restored the default Bizbox URL when saved settings contain an empty URL.

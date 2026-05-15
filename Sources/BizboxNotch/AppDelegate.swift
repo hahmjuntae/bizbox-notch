@@ -342,7 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return (reminder.action, reminder.scheduledTime, minute)
             }
             .filter { reminder in
-                currentMinute >= reminder.minute
+                currentMinute == reminder.minute
                     && !triggeredReminderKeys.contains(
                         reminderKey(
                             action: reminder.action,
