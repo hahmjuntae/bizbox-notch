@@ -8,14 +8,14 @@ final class SettingsWindowController: NSWindowController {
     private let usernameField = NSTextField()
     private let passwordField = NSSecureTextField()
     private let launchAtLoginCheckbox = NSButton(checkboxWithTitle: "로그인 시 실행", target: nil, action: nil)
-    private var scheduleFields: [Int: (clockIn: TimePickerButton, clockOut: TimePickerButton)] = [:]
+    private var scheduleFields: [Int: (enabled: NSButton, clockIn: TimePickerButton, clockOut: TimePickerButton)] = [:]
 
     init(settings: SettingsStore, onSave: @escaping () -> Void) {
         self.settings = settings
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 500),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 570),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -69,11 +69,17 @@ final class SettingsWindowController: NSWindowController {
         scheduleTitle.font = .boldSystemFont(ofSize: 13)
 
         let scheduleHeader = NSGridView(views: [
-            [NSTextField(labelWithString: ""), NSTextField(labelWithString: "출근"), NSTextField(labelWithString: "퇴근")]
+            [
+                NSTextField(labelWithString: ""),
+                NSTextField(labelWithString: "활성"),
+                NSTextField(labelWithString: "출근"),
+                NSTextField(labelWithString: "퇴근")
+            ]
         ])
-        scheduleHeader.column(at: 0).width = 40
-        scheduleHeader.column(at: 1).width = 120
+        scheduleHeader.column(at: 0).width = 32
+        scheduleHeader.column(at: 1).width = 52
         scheduleHeader.column(at: 2).width = 120
+        scheduleHeader.column(at: 3).width = 120
         scheduleHeader.columnSpacing = 12
 
         let scheduleGrid = NSGridView()
@@ -81,20 +87,28 @@ final class SettingsWindowController: NSWindowController {
         scheduleGrid.rowSpacing = 8
 
         for schedule in settings.workdaySchedules {
+            let enabledCheckbox = NSButton(checkboxWithTitle: "", target: self, action: #selector(scheduleEnabledChanged(_:)))
+            enabledCheckbox.tag = schedule.weekday
+            enabledCheckbox.state = schedule.enabled ? .on : .off
+
             let clockInField = makeTimePicker(schedule.clockIn)
             let clockOutField = makeTimePicker(schedule.clockOut)
-            scheduleFields[schedule.weekday] = (clockInField, clockOutField)
+            clockInField.isEnabled = schedule.enabled
+            clockOutField.isEnabled = schedule.enabled
+            scheduleFields[schedule.weekday] = (enabledCheckbox, clockInField, clockOutField)
 
             scheduleGrid.addRow(with: [
                 NSTextField(labelWithString: schedule.label),
+                enabledCheckbox,
                 clockInField,
                 clockOutField
             ])
         }
 
-        scheduleGrid.column(at: 0).width = 40
-        scheduleGrid.column(at: 1).width = 120
+        scheduleGrid.column(at: 0).width = 32
+        scheduleGrid.column(at: 1).width = 52
         scheduleGrid.column(at: 2).width = 120
+        scheduleGrid.column(at: 3).width = 120
 
         let saveButton = NSButton(title: "저장", target: self, action: #selector(save))
         saveButton.keyEquivalent = "\r"
@@ -135,8 +149,10 @@ final class SettingsWindowController: NSWindowController {
         launchAtLoginCheckbox.state = LoginItemManager.shared.isEnabled ? .on : .off
 
         for schedule in settings.workdaySchedules {
+            scheduleFields[schedule.weekday]?.enabled.state = schedule.enabled ? .on : .off
             scheduleFields[schedule.weekday]?.clockIn.time24 = schedule.clockIn
             scheduleFields[schedule.weekday]?.clockOut.time24 = schedule.clockOut
+            applyEnabledState(for: schedule.weekday)
         }
     }
 
@@ -148,6 +164,7 @@ final class SettingsWindowController: NSWindowController {
             SettingsStore.WorkdaySchedule(
                 weekday: schedule.weekday,
                 label: schedule.label,
+                enabled: scheduleFields[schedule.weekday]?.enabled.state == .on,
                 clockIn: scheduleFields[schedule.weekday]?.clockIn.time24 ?? schedule.clockIn,
                 clockOut: scheduleFields[schedule.weekday]?.clockOut.time24 ?? schedule.clockOut
             )
@@ -183,6 +200,20 @@ final class SettingsWindowController: NSWindowController {
 
     @objc private func closeWindow() {
         window?.close()
+    }
+
+    @objc private func scheduleEnabledChanged(_ sender: NSButton) {
+        applyEnabledState(for: sender.tag)
+    }
+
+    private func applyEnabledState(for weekday: Int) {
+        guard let fields = scheduleFields[weekday] else {
+            return
+        }
+
+        let enabled = fields.enabled.state == .on
+        fields.clockIn.isEnabled = enabled
+        fields.clockOut.isEnabled = enabled
     }
 
     private func label(_ text: String) -> NSTextField {

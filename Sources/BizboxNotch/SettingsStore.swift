@@ -14,6 +14,7 @@ final class SettingsStore {
     struct WorkdaySchedule {
         let weekday: Int
         let label: String
+        var enabled: Bool
         var clockIn: String
         var clockOut: String
     }
@@ -88,15 +89,18 @@ final class SettingsStore {
     var workdaySchedules: [WorkdaySchedule] {
         get {
             [
-                schedule(for: 2, label: "월", defaultClockIn: "08:50", defaultClockOut: "18:10"),
-                schedule(for: 3, label: "화", defaultClockIn: "08:20", defaultClockOut: "17:40"),
-                schedule(for: 4, label: "수", defaultClockIn: "08:20", defaultClockOut: "17:40"),
-                schedule(for: 5, label: "목", defaultClockIn: "08:20", defaultClockOut: "17:40"),
-                schedule(for: 6, label: "금", defaultClockIn: "08:50", defaultClockOut: "18:10")
+                schedule(for: 1, label: "일", defaultEnabled: false, defaultClockIn: "08:50", defaultClockOut: "18:10"),
+                schedule(for: 2, label: "월", defaultEnabled: true, defaultClockIn: "08:50", defaultClockOut: "18:10"),
+                schedule(for: 3, label: "화", defaultEnabled: true, defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 4, label: "수", defaultEnabled: true, defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 5, label: "목", defaultEnabled: true, defaultClockIn: "08:20", defaultClockOut: "17:40"),
+                schedule(for: 6, label: "금", defaultEnabled: true, defaultClockIn: "08:50", defaultClockOut: "18:10"),
+                schedule(for: 7, label: "토", defaultEnabled: false, defaultClockIn: "08:50", defaultClockOut: "18:10")
             ]
         }
         set {
             for schedule in newValue {
+                defaults.set(schedule.enabled, forKey: scheduleKey(weekday: schedule.weekday, action: "enabled"))
                 defaults.set(schedule.clockIn, forKey: scheduleKey(weekday: schedule.weekday, action: "clockIn"))
                 defaults.set(schedule.clockOut, forKey: scheduleKey(weekday: schedule.weekday, action: "clockOut"))
             }
@@ -146,6 +150,10 @@ final class SettingsStore {
 
     func validateSchedules(_ schedules: [WorkdaySchedule]) throws {
         for schedule in schedules {
+            guard schedule.enabled else {
+                continue
+            }
+
             guard Self.minutes(from: schedule.clockIn) != nil else {
                 throw AttendanceError.configuration("\(schedule.label)요일 출근 시간을 HH:mm 형식으로 입력하세요.")
             }
@@ -205,12 +213,14 @@ final class SettingsStore {
     private func schedule(
         for weekday: Int,
         label: String,
+        defaultEnabled: Bool,
         defaultClockIn: String,
         defaultClockOut: String
     ) -> WorkdaySchedule {
         WorkdaySchedule(
             weekday: weekday,
             label: label,
+            enabled: defaults.object(forKey: scheduleKey(weekday: weekday, action: "enabled")) as? Bool ?? defaultEnabled,
             clockIn: defaults.string(forKey: scheduleKey(weekday: weekday, action: "clockIn")) ?? defaultClockIn,
             clockOut: defaults.string(forKey: scheduleKey(weekday: weekday, action: "clockOut")) ?? defaultClockOut
         )

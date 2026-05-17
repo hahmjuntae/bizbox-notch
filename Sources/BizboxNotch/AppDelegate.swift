@@ -310,7 +310,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: now)
-        guard let schedule = settings.workdaySchedules.first(where: { $0.weekday == weekday }) else {
+        guard let schedule = settings.workdaySchedules.first(where: { $0.weekday == weekday && $0.enabled }) else {
             return
         }
 
@@ -394,7 +394,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: workdayNotificationIdentifiers())
 
-        for schedule in settings.workdaySchedules {
+        for schedule in settings.workdaySchedules where schedule.enabled {
             addWorkdayNotification(center: center, schedule: schedule, action: .clockIn, time: schedule.clockIn)
             addWorkdayNotification(center: center, schedule: schedule, action: .clockOut, time: schedule.clockOut)
         }

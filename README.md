@@ -4,6 +4,8 @@ macOS 상단바에서 Bizbox 출근/퇴근을 실행하는 메뉴바 앱입니�
 
 ## 설치
 
+macOS 설치:
+
 설치:
 
 ```bash
@@ -22,6 +24,22 @@ brew upgrade --cask bizbox-notch
 
 ```bash
 brew uninstall --cask bizbox-notch
+```
+
+Windows 버전은 `windows/BizboxNotch.Windows`에 있습니다.
+
+개발 실행:
+
+```powershell
+cd windows\BizboxNotch.Windows
+dotnet run -c Release
+```
+
+배포 빌드:
+
+```powershell
+cd bizbox-notch
+scripts\publish-windows.ps1
 ```
 
 ## macOS 보안 경고
